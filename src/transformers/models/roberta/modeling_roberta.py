@@ -49,7 +49,6 @@ from ...modeling_utils import (
 from ...utils import logging
 from .configuration_roberta import RobertaConfig
 
-
 logger = logging.get_logger(__name__)
 
 _CHECKPOINT_FOR_DOC = "roberta-base"
@@ -78,7 +77,14 @@ class RobertaEmbeddings(nn.Module):
         self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size, padding_idx=config.pad_token_id)
         self.position_embeddings = nn.Embedding(config.max_position_embeddings, config.hidden_size)
         self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
-        self.token_label_type_embeddings = nn.Embedding(8, config.hidden_size)
+        # self.token_label_type_embeddings = nn.Embedding(8, config.hidden_size)
+        self.token_label_0_type_embeddings = nn.Embedding(2, config.hidden_size)
+        self.token_label_1_type_embeddings = nn.Embedding(2, config.hidden_size)
+        self.token_label_2_type_embeddings = nn.Embedding(2, config.hidden_size)
+        self.token_label_3_type_embeddings = nn.Embedding(2, config.hidden_size)
+        self.token_label_4_type_embeddings = nn.Embedding(2, config.hidden_size)
+        self.token_label_5_type_embeddings = nn.Embedding(2, config.hidden_size)
+        self.token_label_6_type_embeddings = nn.Embedding(2, config.hidden_size)
 
         # self.LayerNorm is not snake-cased to stick with TensorFlow model variable name and be able to load
         # any TensorFlow checkpoint file
@@ -101,7 +107,15 @@ class RobertaEmbeddings(nn.Module):
         )
 
     def forward(
-        self, input_ids=None, token_type_ids=None, token_label_type_ids=None, position_ids=None, inputs_embeds=None, past_key_values_length=0
+            # self, input_ids=None, token_type_ids=None, token_label_type_ids=None, position_ids=None, inputs_embeds=None, past_key_values_length=0
+            self, input_ids=None, token_type_ids=None,
+            token_label_0_type_ids=None,
+            token_label_1_type_ids=None,
+            token_label_2_type_ids=None,
+            token_label_3_type_ids=None,
+            token_label_4_type_ids=None,
+            token_label_5_type_ids=None,
+            token_label_6_type_ids=None, position_ids=None, inputs_embeds=None, past_key_values_length=0
     ):
         if position_ids is None:
             if input_ids is not None:
@@ -131,14 +145,23 @@ class RobertaEmbeddings(nn.Module):
         if inputs_embeds is None:
             inputs_embeds = self.word_embeddings(input_ids)
         token_type_embeddings = self.token_type_embeddings(token_type_ids)
-        
-        if token_label_type_ids is None:
-            embeddings = inputs_embeds + token_type_embeddings
-        else:
-            token_label_type_embeddings = self.token_label_type_embeddings(token_label_type_ids)
-            embeddings = inputs_embeds + token_type_embeddings + token_label_type_embeddings
-            
-        #embeddings = inputs_embeds + token_type_embeddings + token_label_type_embeddings
+
+        # if token_label_type_ids is None:
+        #     embeddings = inputs_embeds + token_type_embeddings
+        # else:
+        #     token_label_type_embeddings = self.token_label_type_embeddings(token_label_type_ids)
+        #     embeddings = inputs_embeds + token_type_embeddings + token_label_type_embeddings
+
+        embeddings = inputs_embeds + token_type_embeddings + \
+                     self.token_label_0_type_embeddings(token_label_0_type_ids) + \
+                     self.token_label_1_type_embeddings(token_label_1_type_ids) + \
+                     self.token_label_2_type_embeddings(token_label_2_type_ids) + \
+                     self.token_label_3_type_embeddings(token_label_3_type_ids) + \
+                     self.token_label_4_type_embeddings(token_label_4_type_ids) + \
+                     self.token_label_5_type_embeddings(token_label_5_type_ids) + \
+                     self.token_label_6_type_embeddings(token_label_6_type_ids)
+
+        # embeddings = inputs_embeds + token_type_embeddings + token_label_type_embeddings
         if self.position_embedding_type == "absolute":
             position_embeddings = self.position_embeddings(position_ids)
             embeddings += position_embeddings
@@ -196,14 +219,14 @@ class RobertaSelfAttention(nn.Module):
         return x.permute(0, 2, 1, 3)
 
     def forward(
-        self,
-        hidden_states,
-        attention_mask=None,
-        head_mask=None,
-        encoder_hidden_states=None,
-        encoder_attention_mask=None,
-        past_key_value=None,
-        output_attentions=False,
+            self,
+            hidden_states,
+            attention_mask=None,
+            head_mask=None,
+            encoder_hidden_states=None,
+            encoder_attention_mask=None,
+            past_key_value=None,
+            output_attentions=False,
     ):
         mixed_query_layer = self.query(hidden_states)
 
@@ -332,14 +355,14 @@ class RobertaAttention(nn.Module):
         self.pruned_heads = self.pruned_heads.union(heads)
 
     def forward(
-        self,
-        hidden_states,
-        attention_mask=None,
-        head_mask=None,
-        encoder_hidden_states=None,
-        encoder_attention_mask=None,
-        past_key_value=None,
-        output_attentions=False,
+            self,
+            hidden_states,
+            attention_mask=None,
+            head_mask=None,
+            encoder_hidden_states=None,
+            encoder_attention_mask=None,
+            past_key_value=None,
+            output_attentions=False,
     ):
         self_outputs = self.self(
             hidden_states,
@@ -402,14 +425,14 @@ class RobertaLayer(nn.Module):
         self.output = RobertaOutput(config)
 
     def forward(
-        self,
-        hidden_states,
-        attention_mask=None,
-        head_mask=None,
-        encoder_hidden_states=None,
-        encoder_attention_mask=None,
-        past_key_value=None,
-        output_attentions=False,
+            self,
+            hidden_states,
+            attention_mask=None,
+            head_mask=None,
+            encoder_hidden_states=None,
+            encoder_attention_mask=None,
+            past_key_value=None,
+            output_attentions=False,
     ):
         # decoder uni-directional self-attention cached key/values tuple is at positions 1,2
         self_attn_past_key_value = past_key_value[:2] if past_key_value is not None else None
@@ -478,17 +501,17 @@ class RobertaEncoder(nn.Module):
         self.layer = nn.ModuleList([RobertaLayer(config) for _ in range(config.num_hidden_layers)])
 
     def forward(
-        self,
-        hidden_states,
-        attention_mask=None,
-        head_mask=None,
-        encoder_hidden_states=None,
-        encoder_attention_mask=None,
-        past_key_values=None,
-        use_cache=None,
-        output_attentions=False,
-        output_hidden_states=False,
-        return_dict=True,
+            self,
+            hidden_states,
+            attention_mask=None,
+            head_mask=None,
+            encoder_hidden_states=None,
+            encoder_attention_mask=None,
+            past_key_values=None,
+            use_cache=None,
+            output_attentions=False,
+            output_hidden_states=False,
+            return_dict=True,
     ):
         all_hidden_states = () if output_hidden_states else None
         all_self_attentions = () if output_attentions else None
@@ -746,21 +769,28 @@ class RobertaModel(RobertaPreTrainedModel):
     )
     # Copied from transformers.models.bert.modeling_bert.BertModel.forward
     def forward(
-        self,
-        input_ids=None,
-        attention_mask=None,
-        token_type_ids=None,
-        token_label_type_ids=None,
-        position_ids=None,
-        head_mask=None,
-        inputs_embeds=None,
-        encoder_hidden_states=None,
-        encoder_attention_mask=None,
-        past_key_values=None,
-        use_cache=None,
-        output_attentions=None,
-        output_hidden_states=None,
-        return_dict=None,
+            self,
+            input_ids=None,
+            attention_mask=None,
+            token_type_ids=None,
+            # token_label_type_ids=None,
+            token_label_0_type_ids=None,
+            token_label_1_type_ids=None,
+            token_label_2_type_ids=None,
+            token_label_3_type_ids=None,
+            token_label_4_type_ids=None,
+            token_label_5_type_ids=None,
+            token_label_6_type_ids=None,
+            position_ids=None,
+            head_mask=None,
+            inputs_embeds=None,
+            encoder_hidden_states=None,
+            encoder_attention_mask=None,
+            past_key_values=None,
+            use_cache=None,
+            output_attentions=None,
+            output_hidden_states=None,
+            return_dict=None,
     ):
         r"""
         encoder_hidden_states  (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length, hidden_size)`, `optional`):
@@ -846,7 +876,14 @@ class RobertaModel(RobertaPreTrainedModel):
             input_ids=input_ids,
             position_ids=position_ids,
             token_type_ids=token_type_ids,
-            token_label_type_ids=token_label_type_ids,
+            # token_label_type_ids=token_label_type_ids,
+            token_label_0_type_ids=token_label_0_type_ids,
+            token_label_1_type_ids=token_label_1_type_ids,
+            token_label_2_type_ids=token_label_2_type_ids,
+            token_label_3_type_ids=token_label_3_type_ids,
+            token_label_4_type_ids=token_label_4_type_ids,
+            token_label_5_type_ids=token_label_5_type_ids,
+            token_label_6_type_ids=token_label_6_type_ids,
             inputs_embeds=inputs_embeds,
             past_key_values_length=past_key_values_length,
         )
@@ -909,21 +946,21 @@ class RobertaForCausalLM(RobertaPreTrainedModel):
     @add_start_docstrings_to_model_forward(ROBERTA_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @replace_return_docstrings(output_type=CausalLMOutputWithCrossAttentions, config_class=_CONFIG_FOR_DOC)
     def forward(
-        self,
-        input_ids=None,
-        attention_mask=None,
-        token_type_ids=None,
-        position_ids=None,
-        head_mask=None,
-        inputs_embeds=None,
-        encoder_hidden_states=None,
-        encoder_attention_mask=None,
-        labels=None,
-        past_key_values=None,
-        use_cache=None,
-        output_attentions=None,
-        output_hidden_states=None,
-        return_dict=None,
+            self,
+            input_ids=None,
+            attention_mask=None,
+            token_type_ids=None,
+            position_ids=None,
+            head_mask=None,
+            inputs_embeds=None,
+            encoder_hidden_states=None,
+            encoder_attention_mask=None,
+            labels=None,
+            past_key_values=None,
+            use_cache=None,
+            output_attentions=None,
+            output_hidden_states=None,
+            return_dict=None,
     ):
         r"""
         encoder_hidden_states  (:obj:`torch.FloatTensor` of shape :obj:`(batch_size, sequence_length, hidden_size)`, `optional`):
@@ -1068,19 +1105,19 @@ class RobertaForMaskedLM(RobertaPreTrainedModel):
         mask="<mask>",
     )
     def forward(
-        self,
-        input_ids=None,
-        attention_mask=None,
-        token_type_ids=None,
-        position_ids=None,
-        head_mask=None,
-        inputs_embeds=None,
-        encoder_hidden_states=None,
-        encoder_attention_mask=None,
-        labels=None,
-        output_attentions=None,
-        output_hidden_states=None,
-        return_dict=None,
+            self,
+            input_ids=None,
+            attention_mask=None,
+            token_type_ids=None,
+            position_ids=None,
+            head_mask=None,
+            inputs_embeds=None,
+            encoder_hidden_states=None,
+            encoder_attention_mask=None,
+            labels=None,
+            output_attentions=None,
+            output_hidden_states=None,
+            return_dict=None,
     ):
         r"""
         labels (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
@@ -1178,18 +1215,25 @@ class RobertaForSequenceClassification(RobertaPreTrainedModel):
         config_class=_CONFIG_FOR_DOC,
     )
     def forward(
-        self,
-        input_ids=None,
-        attention_mask=None,
-        token_type_ids=None,
-        token_label_type_ids=None,
-        position_ids=None,
-        head_mask=None,
-        inputs_embeds=None,
-        labels=None,
-        output_attentions=None,
-        output_hidden_states=None,
-        return_dict=None,
+            self,
+            input_ids=None,
+            attention_mask=None,
+            token_type_ids=None,
+            token_label_type_ids=None,
+            token_label_0_type_ids=None,
+            token_label_1_type_ids=None,
+            token_label_2_type_ids=None,
+            token_label_3_type_ids=None,
+            token_label_4_type_ids=None,
+            token_label_5_type_ids=None,
+            token_label_6_type_ids=None,
+            position_ids=None,
+            head_mask=None,
+            inputs_embeds=None,
+            labels=None,
+            output_attentions=None,
+            output_hidden_states=None,
+            return_dict=None,
     ):
         r"""
         labels (:obj:`torch.LongTensor` of shape :obj:`(batch_size,)`, `optional`):
@@ -1203,7 +1247,14 @@ class RobertaForSequenceClassification(RobertaPreTrainedModel):
             input_ids,
             attention_mask=attention_mask,
             token_type_ids=token_type_ids,
-            token_label_type_ids=token_label_type_ids,
+            # token_label_type_ids=token_label_type_ids,
+            token_label_0_type_ids=token_label_0_type_ids,
+            token_label_1_type_ids=token_label_1_type_ids,
+            token_label_2_type_ids=token_label_2_type_ids,
+            token_label_3_type_ids=token_label_3_type_ids,
+            token_label_4_type_ids=token_label_4_type_ids,
+            token_label_5_type_ids=token_label_5_type_ids,
+            token_label_6_type_ids=token_label_6_type_ids,
             position_ids=position_ids,
             head_mask=head_mask,
             inputs_embeds=inputs_embeds,
@@ -1276,17 +1327,17 @@ class RobertaForMultipleChoice(RobertaPreTrainedModel):
         config_class=_CONFIG_FOR_DOC,
     )
     def forward(
-        self,
-        input_ids=None,
-        token_type_ids=None,
-        attention_mask=None,
-        labels=None,
-        position_ids=None,
-        head_mask=None,
-        inputs_embeds=None,
-        output_attentions=None,
-        output_hidden_states=None,
-        return_dict=None,
+            self,
+            input_ids=None,
+            token_type_ids=None,
+            attention_mask=None,
+            labels=None,
+            position_ids=None,
+            head_mask=None,
+            inputs_embeds=None,
+            output_attentions=None,
+            output_hidden_states=None,
+            return_dict=None,
     ):
         r"""
         labels (:obj:`torch.LongTensor` of shape :obj:`(batch_size,)`, `optional`):
@@ -1373,17 +1424,17 @@ class RobertaForTokenClassification(RobertaPreTrainedModel):
         config_class=_CONFIG_FOR_DOC,
     )
     def forward(
-        self,
-        input_ids=None,
-        attention_mask=None,
-        token_type_ids=None,
-        position_ids=None,
-        head_mask=None,
-        inputs_embeds=None,
-        labels=None,
-        output_attentions=None,
-        output_hidden_states=None,
-        return_dict=None,
+            self,
+            input_ids=None,
+            attention_mask=None,
+            token_type_ids=None,
+            position_ids=None,
+            head_mask=None,
+            inputs_embeds=None,
+            labels=None,
+            output_attentions=None,
+            output_hidden_states=None,
+            return_dict=None,
     ):
         r"""
         labels (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
@@ -1485,18 +1536,18 @@ class RobertaForQuestionAnswering(RobertaPreTrainedModel):
         config_class=_CONFIG_FOR_DOC,
     )
     def forward(
-        self,
-        input_ids=None,
-        attention_mask=None,
-        token_type_ids=None,
-        position_ids=None,
-        head_mask=None,
-        inputs_embeds=None,
-        start_positions=None,
-        end_positions=None,
-        output_attentions=None,
-        output_hidden_states=None,
-        return_dict=None,
+            self,
+            input_ids=None,
+            attention_mask=None,
+            token_type_ids=None,
+            position_ids=None,
+            head_mask=None,
+            inputs_embeds=None,
+            start_positions=None,
+            end_positions=None,
+            output_attentions=None,
+            output_hidden_states=None,
+            return_dict=None,
     ):
         r"""
         start_positions (:obj:`torch.LongTensor` of shape :obj:`(batch_size,)`, `optional`):
