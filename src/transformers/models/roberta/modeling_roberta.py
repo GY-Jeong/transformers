@@ -77,7 +77,7 @@ class RobertaEmbeddings(nn.Module):
         self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size, padding_idx=config.pad_token_id)
         self.position_embeddings = nn.Embedding(config.max_position_embeddings, config.hidden_size)
         self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
-        self.token_label_type_embeddings = nn.Embedding(2, config.hidden_size)
+        self.token_label_type_embeddings = nn.Embedding(8, config.hidden_size)
         # self.token_label_0_type_embeddings = nn.Embedding(2, config.hidden_size)
         # self.token_label_1_type_embeddings = nn.Embedding(2, config.hidden_size)
         # self.token_label_2_type_embeddings = nn.Embedding(2, config.hidden_size)
