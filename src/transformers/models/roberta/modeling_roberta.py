@@ -1205,9 +1205,8 @@ class RobertaForSequenceClassification(RobertaPreTrainedModel):
 
         sequence_additional_feature = torch.mul(sequence_output, token_label_mask)
         sequence_additional_feature = torch.sum(sequence_additional_feature, dim=2)
-        sequence_output = torch.cat((sequence_output, sequence_additional_feature), dim=1)
 
-        logits = self.classifier(sequence_output)
+        logits = self.classifier(sequence_output, sequence_additional_feature)
 
         loss = None
         if labels is not None:
@@ -1442,8 +1441,9 @@ class RobertaClassificationHead(nn.Module):
         self.dropout = nn.Dropout(classifier_dropout)
         self.out_proj = nn.Linear(config.hidden_size, config.num_labels)
 
-    def forward(self, features, **kwargs):
+    def forward(self, features, additional_features, **kwargs):
         x = features[:, 0, :]  # take <s> token (equiv. to [CLS])
+        x = torch.cat((features, additional_features), dim=1)
         x = self.dropout(x)
         x = self.dense(x)
         x = torch.tanh(x)
