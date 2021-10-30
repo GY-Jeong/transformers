@@ -1443,7 +1443,7 @@ class RobertaClassificationHead(nn.Module):
 
     def forward(self, features, additional_features, **kwargs):
         x = features[:, 0, :]  # take <s> token (equiv. to [CLS])
-        x = torch.cat((features, additional_features), dim=1)
+        x = torch.cat((x, additional_features), dim=1)
         x = self.dropout(x)
         x = self.dense(x)
         x = torch.tanh(x)
