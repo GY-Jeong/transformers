@@ -1204,7 +1204,7 @@ class RobertaForSequenceClassification(RobertaPreTrainedModel):
         sequence_output = outputs[0]
 
         sequence_additional_feature = torch.mul(sequence_output, token_label_mask)
-        sequence_additional_feature = torch.sum(sequence_additional_feature, dim=2)
+        sequence_additional_feature = torch.sum(sequence_additional_feature, dim=1)
 
         logits = self.classifier(sequence_output, sequence_additional_feature)
 
