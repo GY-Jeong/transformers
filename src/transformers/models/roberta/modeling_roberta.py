@@ -78,6 +78,7 @@ class RobertaEmbeddings(nn.Module):
         self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size, padding_idx=config.pad_token_id)
         self.position_embeddings = nn.Embedding(config.max_position_embeddings, config.hidden_size)
         self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
+        self.token_label_type_embeddings = nn.Embedding(config.num_labels+1, config.hidden_size)
 
         # self.LayerNorm is not snake-cased to stick with TensorFlow model variable name and be able to load
         # any TensorFlow checkpoint file
@@ -100,7 +101,7 @@ class RobertaEmbeddings(nn.Module):
         )
 
     def forward(
-        self, input_ids=None, token_type_ids=None, position_ids=None, inputs_embeds=None, past_key_values_length=0
+        self, input_ids=None, token_type_ids=None, token_label_type_ids=None, position_ids=None, inputs_embeds=None, past_key_values_length=0
     ):
         if position_ids is None:
             if input_ids is not None:
@@ -131,7 +132,12 @@ class RobertaEmbeddings(nn.Module):
             inputs_embeds = self.word_embeddings(input_ids)
         token_type_embeddings = self.token_type_embeddings(token_type_ids)
 
-        embeddings = inputs_embeds + token_type_embeddings
+        if token_label_type_ids is None:
+            embeddings = inputs_embeds + token_type_embeddings
+        else:
+            token_label_type_embeddings = self.token_label_type_embeddings(token_label_type_ids)
+            embeddings = inputs_embeds + token_type_embeddings + token_label_type_embeddings
+
         if self.position_embedding_type == "absolute":
             position_embeddings = self.position_embeddings(position_ids)
             embeddings += position_embeddings
@@ -743,6 +749,7 @@ class RobertaModel(RobertaPreTrainedModel):
         input_ids=None,
         attention_mask=None,
         token_type_ids=None,
+        token_label_type_ids=None,
         position_ids=None,
         head_mask=None,
         inputs_embeds=None,
@@ -838,6 +845,7 @@ class RobertaModel(RobertaPreTrainedModel):
             input_ids=input_ids,
             position_ids=position_ids,
             token_type_ids=token_type_ids,
+            token_label_type_ids=token_label_type_ids,
             inputs_embeds=inputs_embeds,
             past_key_values_length=past_key_values_length,
         )
@@ -1173,6 +1181,7 @@ class RobertaForSequenceClassification(RobertaPreTrainedModel):
         input_ids=None,
         attention_mask=None,
         token_type_ids=None,
+        token_label_type_ids=None,
         token_label_mask=None,
         position_ids=None,
         head_mask=None,
@@ -1194,6 +1203,7 @@ class RobertaForSequenceClassification(RobertaPreTrainedModel):
             input_ids,
             attention_mask=attention_mask,
             token_type_ids=token_type_ids,
+            token_label_type_ids=token_label_type_ids,
             position_ids=position_ids,
             head_mask=head_mask,
             inputs_embeds=inputs_embeds,
